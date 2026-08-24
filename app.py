@@ -10,6 +10,9 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
+import io
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 # ---------------------------------------------------------------------------
 # Config
@@ -381,19 +384,156 @@ def professor_evaluate():
     return render_template("professor/evaluate.html", teams=teams, categories=cats)
 
 # ---------------------------------------------------------------------------
-# Backup (admin) – protects data on ephemeral free-tier disks
+# Backup / Export (admin) – Excel spreadsheet with all data
 # ---------------------------------------------------------------------------
 @app.route("/admin/backup")
 @admin_required
 def admin_backup():
-    """Download a SQLite backup file of the whole database."""
-    if not os.path.exists(DB_PATH):
-        abort(404)
+    """Download every table as a styled Excel workbook (.xlsx)."""
+    db = get_db()
+
+    # --- fetch data ---
+    teams = db.execute("""
+        SELECT t.id, t.name, t.color,
+               COALESCE(SUM(s.points), 0) AS total,
+               COUNT(DISTINCT s.evaluator_id) AS evaluators
+        FROM teams t
+        LEFT JOIN scores s ON s.team_id = t.id
+        GROUP BY t.id ORDER BY total DESC, t.name ASC
+    """).fetchall()
+
+    scores = db.execute("""
+        SELECT t.name AS team_name, t.color,
+               c.name AS category_name, s.points, s.note, s.created_at,
+               u.name AS evaluator_name
+        FROM scores s
+        JOIN teams t ON t.id = s.team_id
+        JOIN users u ON u.id = s.evaluator_id
+        LEFT JOIN categories c ON c.id = s.category_id
+        ORDER BY s.created_at DESC
+    """).fetchall()
+
+    all_teams = db.execute("SELECT id, name, color, created_at FROM teams ORDER BY name").fetchall()
+    profs     = db.execute("SELECT name, email, created_at FROM users WHERE role='professor' ORDER BY name").fetchall()
+    db.close()
+
+    # --- styling helpers (UP palette) ---
+    UP_RED   = "C8102E"
+    UP_YELLOW = "F5C300"
+    header_fill = PatternFill("solid", fgColor=UP_RED)
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    title_font  = Font(bold=True, color=UP_RED, size=16)
+    gold_fill   = PatternFill("solid", fgColor=UP_YELLOW)
+    thin = Side(style="thin", color="E4E4E7")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center")
+    left   = Alignment(horizontal="left", vertical="center")
+
+    def style_header(ws, row, ncols):
+        for c in range(1, ncols + 1):
+            cell = ws.cell(row=row, column=c)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = center
+            cell.border = border
+
+    def autosize(ws, widths):
+        for i, w in enumerate(widths, start=1):
+            ws.column_dimensions[chr(64 + i) if i <= 26 else "A"].width = w
+
+    wb = openpyxl.Workbook()
+
+    # ===== Sheet 1: Ranking =====
+    ws = wb.active
+    ws.title = "Ranking"
+    ws.merge_cells("A1:D1")
+    ws["A1"] = "🏆 Ranking Geral – Gincana UP 2026"
+    ws["A1"].font = title_font
+    ws.append([])
+    hdr = ["Posição", "Equipe", "Pontuação", "Avaliadores"]
+    ws.append(hdr)
+    style_header(ws, 3, len(hdr))
+    for i, t in enumerate(teams, start=1):
+        ws.append([i, t["name"], float(t["total"]), t["evaluators"]])
+        r = ws.max_row
+        ws.cell(row=r, column=1).alignment = center
+        ws.cell(row=r, column=3).alignment = center
+        ws.cell(row=r, column=4).alignment = center
+        if i == 1:
+            ws.cell(row=r, column=1).fill = gold_fill
+            ws.cell(row=r, column=1).font = Font(bold=True)
+        for c in range(1, 5):
+            ws.cell(row=r, column=c).border = border
+    autosize(ws, [10, 28, 14, 14])
+
+    # ===== Sheet 2: Avaliações =====
+    ws2 = wb.create_sheet("Avaliações")
+    ws2.merge_cells("A1:G1")
+    ws2["A1"] = "📝 Todas as Avaliações"
+    ws2["A1"].font = title_font
+    ws2.append([])
+    hdr2 = ["Equipe", "Categoria", "Nota", "Avaliador", "Observação", "Data"]
+    ws2.append(hdr2)
+    style_header(ws2, 3, len(hdr2))
+    for s in scores:
+        ws2.append([
+            s["team_name"],
+            s["category_name"] or "Nota geral",
+            float(s["points"]),
+            s["evaluator_name"],
+            s["note"] or "",
+            (s["created_at"] or "")[:16],
+        ])
+        r = ws2.max_row
+        for c in range(1, 7):
+            ws2.cell(row=r, column=c).border = border
+    autosize(ws2, [22, 16, 8, 22, 30, 18])
+
+    # ===== Sheet 3: Equipes =====
+    ws3 = wb.create_sheet("Equipes")
+    ws3.merge_cells("A1:D1")
+    ws3["A1"] = "👕 Equipes Cadastradas"
+    ws3["A1"].font = title_font
+    ws3.append([])
+    hdr3 = ["ID", "Nome", "Cor", "Criado em"]
+    ws3.append(hdr3)
+    style_header(ws3, 3, len(hdr3))
+    for t in all_teams:
+        ws3.append([t["id"], t["name"], t["color"], (t["created_at"] or "")[:16]])
+        r = ws3.max_row
+        for c in range(1, 5):
+            ws3.cell(row=r, column=c).border = border
+    autosize(ws3, [6, 28, 12, 18])
+
+    # ===== Sheet 4: Professores =====
+    ws4 = wb.create_sheet("Professores")
+    ws4.merge_cells("A1:C1")
+    ws4["A1"] = "👨‍🏫 Professores Cadastrados"
+    ws4["A1"].font = title_font
+    ws4.append([])
+    hdr4 = ["Nome", "E-mail", "Criado em"]
+    ws4.append(hdr4)
+    style_header(ws4, 3, len(hdr4))
+    for p in profs:
+        ws4.append([p["name"], p["email"], (p["created_at"] or "")[:16]])
+        r = ws4.max_row
+        for c in range(1, 4):
+            ws4.cell(row=r, column=c).border = border
+    autosize(ws4, [26, 30, 18])
+
+    # freeze header rows
+    for w in (ws, ws2, ws3, ws4):
+        w.freeze_panes = "A4"
+
+    # --- save to bytes ---
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
     return send_file(
-        DB_PATH,
-        mimetype="application/octet-stream",
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True,
-        download_name=f"gincana_backup_{datetime.now():%Y%m%d_%H%M}.db",
+        download_name=f"gincana_up_backup_{datetime.now():%Y%m%d_%H%M}.xlsx",
     )
 
 # ---------------------------------------------------------------------------
