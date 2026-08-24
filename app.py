@@ -104,7 +104,7 @@ def admin_required(f):
     def wrapper(*args, **kwargs):
         if "user_id" not in session:
             return redirect(url_for("login"))
-        if session.get("role") != "admin":
+        if session.get("role") not in ("admin", "coordinator"):
             abort(403)
         return f(*args, **kwargs)
     return wrapper
@@ -130,7 +130,7 @@ def inject_user():
 @app.route("/")
 def index():
     if "user_id" in session:
-        if session.get("role") == "admin":
+        if session.get("role") in ("admin", "coordinator"):
             return redirect(url_for("admin_dashboard"))
         return redirect(url_for("professor_dashboard"))
     return redirect(url_for("login"))
@@ -149,7 +149,7 @@ def login():
             session["user_id"] = user["id"]
             session["role"] = user["role"]
             session["name"] = user["name"]
-            if user["role"] == "admin":
+            if user["role"] in ("admin", "coordinator"):
                 return redirect(url_for("admin_dashboard"))
             return redirect(url_for("professor_dashboard"))
 
@@ -187,7 +187,7 @@ def ranking():
 def admin_dashboard():
     db = get_db()
     teams      = db.execute("SELECT COUNT(*) c FROM teams").fetchone()["c"]
-    professors = db.execute("SELECT COUNT(*) c FROM users WHERE role='professor'").fetchone()["c"]
+    professors = db.execute("SELECT COUNT(*) c FROM users WHERE role IN ('professor','coordinator')").fetchone()["c"]
     scores     = db.execute("SELECT COUNT(*) c FROM scores").fetchone()["c"]
     db.close()
     return render_template("admin/dashboard.html", teams=teams, professors=professors, scores=scores)
@@ -250,9 +250,39 @@ def admin_professors():
         db.close()
         return redirect(url_for("admin_professors"))
 
-    profs = db.execute("SELECT id, name, email, created_at FROM users WHERE role='professor' ORDER BY name").fetchall()
+    profs = db.execute("SELECT id, name, email, role, created_at FROM users WHERE role IN ('professor','coordinator') ORDER BY role DESC, name").fetchall()
     db.close()
     return render_template("admin/professors.html", professors=profs)
+
+@app.route("/admin/professors/<int:prof_id>/promote", methods=["POST"])
+@admin_required
+def admin_professor_promote(prof_id):
+    if session.get("role") != "admin":
+        flash("Apenas o coordenador principal pode conceder poderes de coordenador.", "error")
+        return redirect(url_for("admin_professors"))
+    db = get_db()
+    db.execute("UPDATE users SET role='coordinator' WHERE id=?", (prof_id,))
+    db.commit()
+    user = db.execute("SELECT name FROM users WHERE id=?", (prof_id,)).fetchone()
+    db.close()
+    if user:
+        flash(f"{user['name']} agora é Coordenador(a) e pode acessar o painel e avaliar equipes!", "success")
+    return redirect(url_for("admin_professors"))
+
+@app.route("/admin/professors/<int:prof_id>/demote", methods=["POST"])
+@admin_required
+def admin_professor_demote(prof_id):
+    if session.get("role") != "admin":
+        flash("Apenas o coordenador principal pode remover poderes de coordenador.", "error")
+        return redirect(url_for("admin_professors"))
+    db = get_db()
+    db.execute("UPDATE users SET role='professor' WHERE id=?", (prof_id,))
+    db.commit()
+    user = db.execute("SELECT name FROM users WHERE id=?", (prof_id,)).fetchone()
+    db.close()
+    if user:
+        flash(f"{user['name']} voltou a ser apenas Professor(a).", "success")
+    return redirect(url_for("admin_professors"))
 
 @app.route("/admin/professors/<int:prof_id>/delete", methods=["POST"])
 @admin_required
@@ -332,7 +362,7 @@ def admin_score_delete(score_id):
 @app.route("/professor")
 @login_required
 def professor_dashboard():
-    if session.get("role") == "admin":
+    if session.get("role") not in ("professor", "coordinator"):
         return redirect(url_for("admin_dashboard"))
     db = get_db()
     my_scores = db.execute("""
@@ -351,7 +381,7 @@ def professor_dashboard():
 @app.route("/professor/evaluate", methods=["GET", "POST"])
 @login_required
 def professor_evaluate():
-    if session.get("role") == "admin":
+    if session.get("role") not in ("professor", "coordinator"):
         return redirect(url_for("admin_dashboard"))
     db = get_db()
     teams = db.execute("SELECT * FROM teams ORDER BY name").fetchall()

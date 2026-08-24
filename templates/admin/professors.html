@@ -20,7 +20,7 @@
 
     <!-- List -->
     <div class="card">
-        <h2>Professores Cadastrados ({{ professors|length }})</h2>
+        <h2>Professores e Coordenadores ({{ professors|length }})</h2>
         {% if not professors %}
             <div class="empty">
                 <div class="icon">👨‍🏫</div>
@@ -30,10 +30,26 @@
             {% for prof in professors %}
                 <div class="list-item">
                     <div>
-                        <div class="name">{{ prof.name }}</div>
+                        <div class="name">
+                            {{ prof.name }}
+                            {% if prof.role == 'coordinator' %}
+                                <span class="badge badge-admin">Coordenador(a)</span>
+                            {% else %}
+                                <span class="badge badge-prof">Professor(a)</span>
+                            {% endif %}
+                        </div>
                         <div class="meta">{{ prof.email }}</div>
                     </div>
                     <div class="actions">
+                        {% if prof.role == 'professor' and current_user.role == 'admin' %}
+                            <form method="POST" action="{{ url_for('admin_professor_promote', prof_id=prof.id) }}">
+                                <button type="submit" class="btn btn-accent btn-sm" title="Tornar coordenador">⬆ Coordenar</button>
+                            </form>
+                        {% elif prof.role == 'coordinator' and current_user.role == 'admin' %}
+                            <form method="POST" action="{{ url_for('admin_professor_demote', prof_id=prof.id) }}">
+                                <button type="submit" class="btn btn-ghost btn-sm" title="Voltar a professor">⬇ Rebaixar</button>
+                            </form>
+                        {% endif %}
                         <form method="POST" action="{{ url_for('admin_professor_delete', prof_id=prof.id) }}"
                               onsubmit="return confirm('Remover {{ prof.name }}?')">
                             <button type="submit" class="btn btn-danger btn-sm">✕</button>
@@ -42,6 +58,15 @@
                 </div>
             {% endfor %}
         {% endif %}
+    </div>
+
+    <!-- Help -->
+    <div class="card" style="background: var(--up-gray-light);">
+        <p style="font-size:12px; color:var(--muted); line-height:1.6;">
+            💡 <strong>Coordenador(a):</strong> recebe acesso ao painel (equipes, professores,
+            notas, ranking, planilha) <strong>e continua avaliando equipes</strong> como qualquer
+            professor. Apenas o coordenador principal (admin) pode conceder ou remover esse poder.
+        </p>
     </div>
 </div>
 {% endblock %}
