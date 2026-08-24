@@ -15,7 +15,9 @@ import sqlite3
 # Config
 # ---------------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH  = os.path.join(BASE_DIR, "gincana.db")
+# On platforms like Render the working dir is read-only; prefer a writable volume.
+DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)
+DB_PATH  = os.path.join(DATA_DIR, "gincana.db")
 
 app = Flask(__name__)
 # Production-safe: persistent secret key (so sessions survive restarts), override via env.
@@ -415,7 +417,11 @@ def api_ranking():
 # ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
+# Ensure the database schema (and default admin user) exist.
+# Under gunicorn the module is imported, not run as __main__, so we
+# initialize at import time. The operation is idempotent (IF NOT EXISTS).
+init_db()
+
 if __name__ == "__main__":
-    init_db()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=DEBUG)
