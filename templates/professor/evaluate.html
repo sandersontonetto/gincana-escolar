@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Avaliar – Gincana Escolar{% endblock %}
+{% block content %}
+<div class="container">
+    {% if not teams %}
+        <div class="card">
+            <div class="empty">
+                <div class="icon">⚠️</div>
+                <p>Ainda não há equipes cadastradas.<br>O coordenador precisa criá-las primeiro.</p>
+            </div>
+        </div>
+    {% else %}
+    <div class="card">
+        <h2>✏️ Avaliar Equipe</h2>
+        <form method="POST" action="{{ url_for('professor_evaluate') }}">
+            <label>Equipe</label>
+            <select name="team_id" required>
+                <option value="">Selecione uma equipe...</option>
+                {% for team in teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Categoria (opcional)</label>
+            <select name="category_id">
+                <option value="">— Nota geral —</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Nota (0 a 100)</label>
+            <div class="score-input-wrap">
+                <div class="score-display" id="scoreDisplay">50</div>
+                <input type="range" class="score-slider" id="scoreSlider"
+                       name="points" min="0" max="100" value="50" step="0.5">
+            </div>
+
+            <label>Observação (opcional)</label>
+            <textarea name="note" placeholder="Comentário sobre a avaliação..."></textarea>
+
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;">
+                ✓ Registrar Nota
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const slider = document.getElementById('scoreSlider');
+    const display = document.getElementById('scoreDisplay');
+    if (slider) {
+        slider.addEventListener('input', function() {
+            display.textContent = this.value;
+        });
+    }
+</script>
+{% endblock %}

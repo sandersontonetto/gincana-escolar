@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Painel – Gincana Escolar{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h2>Bem-vindo(a), {{ current_user.name }}!</h2>
+        <p style="color:var(--muted); font-size:13px;">Gerencie a gincana escolar</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="number">{{ teams }}</div>
+            <div class="label">Equipes</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ professors }}</div>
+            <div class="label">Professores</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ scores }}</div>
+            <div class="label">Avaliações</div>
+        </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="card">
+        <h2>Ações Rápidas</h2>
+        <div style="display:grid; gap:10px; margin-top:12px;">
+            <a href="{{ url_for('admin_teams') }}" class="btn btn-ghost btn-block">
+                👕 Gerenciar Equipes
+            </a>
+            <a href="{{ url_for('admin_professors') }}" class="btn btn-ghost btn-block">
+                👨‍🏫 Cadastrar Professores
+            </a>
+            <a href="{{ url_for('admin_categories') }}" class="btn btn-ghost btn-block">
+                📂 Gerenciar Categorias
+            </a>
+            <a href="{{ url_for('ranking') }}" class="btn btn-primary btn-block">
+                🏆 Ver Ranking
+            </a>
+            <a href="{{ url_for('admin_scores') }}" class="btn btn-ghost btn-block">
+                📝 Ver Todas as Notas
+            </a>
+            <a href="{{ url_for('admin_backup') }}" class="btn btn-ghost btn-block">
+                💾 Baixar Backup (SQLite)
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

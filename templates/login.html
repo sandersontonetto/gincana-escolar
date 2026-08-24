@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Entrar – Gincana Escolar{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:40px;">
+    <div class="card" style="text-align:center;">
+        <div style="font-size:48px; margin-bottom:8px;">🏆</div>
+        <h2 style="text-align:center;">Gincana Escolar</h2>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">
+            Entre para avaliar as equipes
+        </p>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <label>E-mail</label>
+            <input type="email" name="email" placeholder="seu@email.com" required autofocus>
+
+            <label>Senha</label>
+            <input type="password" name="password" placeholder="••••••••" required>
+
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:20px;">
+                Entrar
+            </button>
+        </form>
+
+        <p style="margin-top:16px;">
+            <a href="{{ url_for('ranking') }}" style="color:var(--primary); font-size:13px; text-decoration:none;">
+                🏆 Ver ranking público
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}

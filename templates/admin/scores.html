@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Notas – Gincana Escolar{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h2>📝 Todas as Avaliações ({{ scores|length }})</h2>
+        {% if not scores %}
+            <div class="empty">
+                <div class="icon">📝</div>
+                <p>Nenhuma avaliação registrada ainda.</p>
+            </div>
+        {% else %}
+            {% for s in scores %}
+                <div class="list-item">
+                    <div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="color-dot" style="background:{{ s.color }}"></span>
+                            <span class="name">{{ s.team_name }}</span>
+                        </div>
+                        <div class="meta">
+                            {{ s.category_name or 'Nota geral' }} • Avaliado por {{ s.evaluator_name }} •
+                            {{ s.created_at[:16] }}
+                            {% if s.note %} • "{{ s.note }}"{% endif %}
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:700; font-size:16px; color:var(--primary);">{{ '%.1f' % s.points }}</span>
+                        <form method="POST" action="{{ url_for('admin_score_delete', score_id=s.id) }}"
+                              onsubmit="return confirm('Excluir esta avaliação?')">
+                            <button type="submit" class="btn btn-danger btn-sm">✕</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Painel – Professor{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h2>Olá, {{ current_user.name }}! 👋</h2>
+        <p style="color:var(--muted); font-size:13px;">Avalie as equipes da gincana</p>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="card">
+        <h2>Ações</h2>
+        <div style="display:grid; gap:10px; margin-top:12px;">
+            <a href="{{ url_for('professor_evaluate') }}" class="btn btn-primary btn-block">
+                ✏️ Avaliar Equipe
+            </a>
+            <a href="{{ url_for('ranking') }}" class="btn btn-ghost btn-block">
+                🏆 Ver Ranking
+            </a>
+        </div>
+    </div>
+
+    <!-- My scores -->
+    <div class="card">
+        <h2>Minhas Avaliações ({{ my_scores|length }})</h2>
+        {% if not my_scores %}
+            <div class="empty">
+                <div class="icon">📋</div>
+                <p>Você ainda não registrou notas.</p>
+            </div>
+        {% else %}
+            {% for s in my_scores %}
+                <div class="list-item">
+                    <div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="color-dot" style="background:{{ s.color }}"></span>
+                            <span class="name">{{ s.team_name }}</span>
+                        </div>
+                        <div class="meta">{{ s.category_name or 'Nota geral' }} • {{ s.created_at[:16] }}</div>
+                    </div>
+                    <span style="font-weight:700; font-size:16px; color:var(--primary);">{{ '%.1f' % s.points }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

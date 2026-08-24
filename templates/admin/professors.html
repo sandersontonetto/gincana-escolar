@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Professores – Gincana Escolar{% endblock %}
+{% block content %}
+<div class="container">
+    <!-- Form -->
+    <div class="card">
+        <h2>➕ Novo Professor(a)</h2>
+        <form method="POST">
+            <label>Nome completo</label>
+            <input type="text" name="name" placeholder="Nome do professor" required>
+            <label>E-mail (será o login)</label>
+            <input type="email" name="email" placeholder="professor@email.com" required>
+            <label>Senha</label>
+            <input type="password" name="password" placeholder="Mínimo 4 caracteres" required minlength="4">
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;">
+                Cadastrar
+            </button>
+        </form>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+        <h2>Professores Cadastrados ({{ professors|length }})</h2>
+        {% if not professors %}
+            <div class="empty">
+                <div class="icon">👨‍🏫</div>
+                <p>Nenhum professor cadastrado ainda.</p>
+            </div>
+        {% else %}
+            {% for prof in professors %}
+                <div class="list-item">
+                    <div>
+                        <div class="name">{{ prof.name }}</div>
+                        <div class="meta">{{ prof.email }}</div>
+                    </div>
+                    <div class="actions">
+                        <form method="POST" action="{{ url_for('admin_professor_delete', prof_id=prof.id) }}"
+                              onsubmit="return confirm('Remover {{ prof.name }}?')">
+                            <button type="submit" class="btn btn-danger btn-sm">✕</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

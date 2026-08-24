@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4F46E5">
+    <title>{% block title %}Gincana Escolar{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="topbar">
+        <h1>🏆 Gincana Escolar</h1>
+        <div class="user-info">
+            {% if current_user %}
+                <span class="badge {{ 'badge-admin' if current_user.role == 'admin' else 'badge-prof' }}">
+                    {{ current_user.name }}
+                </span>
+                <a href="{{ url_for('logout') }}">Sair</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container" style="padding-bottom:0">
+                {% for cat, msg in messages %}
+                    <div class="flash flash-{{ cat }}">{{ msg }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Content -->
+    {% block content %}{% endblock %}
+
+    <!-- Bottom Nav -->
+    {% if current_user %}
+    <nav class="bottom-nav">
+        {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if request.endpoint == 'admin_dashboard' }}">
+                <span class="icon">📊</span> Início
+            </a>
+            <a href="{{ url_for('admin_teams') }}" class="{{ 'active' if request.endpoint == 'admin_teams' }}">
+                <span class="icon">👕</span> Equipes
+            </a>
+            <a href="{{ url_for('admin_professors') }}" class="{{ 'active' if request.endpoint == 'admin_professors' }}">
+                <span class="icon">👨‍🏫</span> Professores
+            </a>
+            <a href="{{ url_for('ranking') }}" class="{{ 'active' if request.endpoint == 'ranking' }}">
+                <span class="icon">🏆</span> Ranking
+            </a>
+            <a href="{{ url_for('admin_scores') }}" class="{{ 'active' if request.endpoint == 'admin_scores' }}">
+                <span class="icon">📝</span> Notas
+            </a>
+        {% else %}
+            <a href="{{ url_for('professor_dashboard') }}" class="{{ 'active' if request.endpoint == 'professor_dashboard' }}">
+                <span class="icon">📊</span> Início
+            </a>
+            <a href="{{ url_for('professor_evaluate') }}" class="{{ 'active' if request.endpoint == 'professor_evaluate' }}">
+                <span class="icon">✏️</span> Avaliar
+            </a>
+            <a href="{{ url_for('ranking') }}" class="{{ 'active' if request.endpoint == 'ranking' }}">
+                <span class="icon">🏆</span> Ranking
+            </a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

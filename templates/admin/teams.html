@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Equipes – Gincana Escolar{% endblock %}
+{% block content %}
+<div class="container">
+    <!-- Form -->
+    <div class="card">
+        <h2>➕ Nova Equipe</h2>
+        <form method="POST">
+            <label>Nome da equipe</label>
+            <input type="text" name="name" placeholder="Ex: Tigres, Águias..." required>
+            <label>Cor da equipe</label>
+            <input type="color" name="color" value="#4F46E5">
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;">
+                Cadastrar
+            </button>
+        </form>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+        <h2>Equipes Cadastradas ({{ teams|length }})</h2>
+        {% if not teams %}
+            <div class="empty">
+                <div class="icon">👕</div>
+                <p>Nenhuma equipe cadastrada ainda.</p>
+            </div>
+        {% else %}
+            {% for team in teams %}
+                <div class="list-item">
+                    <div>
+                        <span class="color-dot" style="background:{{ team.color }}"></span>
+                        <span class="name">{{ team.name }}</span>
+                    </div>
+                    <div class="actions">
+                        <form method="POST" action="{{ url_for('admin_team_delete', team_id=team.id) }}"
+                              onsubmit="return confirm('Remover a equipe {{ team.name }}?')">
+                            <button type="submit" class="btn btn-danger btn-sm">✕</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

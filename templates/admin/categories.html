@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Categorias – Gincana Escolar{% endblock %}
+{% block content %}
+<div class="container">
+    <!-- Form -->
+    <div class="card">
+        <h2>➕ Nova Categoria</h2>
+        <form method="POST">
+            <label>Nome da categoria / etapa</label>
+            <input type="text" name="name" placeholder="Ex: Futebol, Poesia, Quiz..." required>
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;">
+                Criar Categoria
+            </button>
+        </form>
+        <p style="font-size:12px; color:var(--muted); margin-top:10px;">
+            Categorias são <strong>opcionais</strong>. Se não criar nenhuma, os professores avaliam por nota única sem divisão.
+        </p>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+        <h2>Categorias ({{ categories|length }})</h2>
+        {% if not categories %}
+            <div class="empty">
+                <div class="icon">📂</div>
+                <p>Nenhuma categoria ainda.<br>Ou omita categorias e avalie sem divisão.</p>
+            </div>
+        {% else %}
+            {% for cat in categories %}
+                <div class="list-item">
+                    <div class="name">{{ cat.name }}</div>
+                    <div class="actions">
+                        <form method="POST" action="{{ url_for('admin_category_delete', cat_id=cat.id) }}"
+                              onsubmit="return confirm('Remover a categoria {{ cat.name }}?')">
+                            <button type="submit" class="btn btn-danger btn-sm">✕</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

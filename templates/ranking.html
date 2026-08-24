@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Ranking – Gincana Escolar{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h2>🏆 Ranking Geral</h2>
+        <p style="color:var(--muted); font-size:12px;">
+            Atualizado automaticamente
+        </p>
+        <div id="ranking-list">
+            <!-- Filled by JS -->
+            {% if not teams %}
+                <div class="empty">
+                    <div class="icon">🏆</div>
+                    <p>Ainda não há equipes cadastradas.</p>
+                </div>
+            {% else %}
+                {% set max_score = teams[0].total if teams[0].total > 0 else 1 %}
+                {% for team in teams %}
+                    <div class="ranking-item">
+                        <div class="ranking-pos {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% else %}other{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div style="flex:1;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span class="color-dot" style="background:{{ team.color }}"></span>
+                                <span class="ranking-name">{{ team.name }}</span>
+                            </div>
+                            <div class="ranking-bar-bg">
+                                <div class="ranking-bar" style="width:{{ (team.total / max_score * 100)|round }}%; background:{{ team.color }};"></div>
+                            </div>
+                        </div>
+                        <span class="ranking-score">{{ '%.1f' % team.total }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function refreshRanking() {
+    try {
+        const res = await fetch('/api/ranking');
+        const teams = await res.json();
+        const container = document.getElementById('ranking-list');
+
+        if (!teams.length) {
+            container.innerHTML = '<div class="empty"><div class="icon">🏆</div><p>Ainda não há equipes cadastradas.</p></div>';
+            return;
+        }
+
+        const maxScore = Math.max(1, ...teams.map(t => t.total));
+        let html = '';
+        teams.forEach((t, i) => {
+            const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'other';
+            const pct = Math.round((t.total / maxScore) * 100);
+            html += `
+                <div class="ranking-item">
+                    <div class="ranking-pos ${posClass}">${i + 1}</div>
+                    <div style="flex:1;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="color-dot" style="background:${t.color}"></span>
+                            <span class="ranking-name">${t.name}</span>
+                        </div>
+                        <div class="ranking-bar-bg">
+                            <div class="ranking-bar" style="width:${pct}%; background:${t.color};"></div>
+                        </div>
+                    </div>
+                    <span class="ranking-score">${Number(t.total).toFixed(1)}</span>
+                </div>`;
+        });
+        container.innerHTML = html;
+    } catch (e) {
+        console.error('Erro ao atualizar ranking:', e);
+    }
+}
+// Refresh every 5 seconds
+refreshRanking();
+setInterval(refreshRanking, 5000);
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.db
+gincana.db
+*.sqlite3
+
+# Test artifacts
+out_*.html
+out_*.json
+cookies.txt
+pcookies.txt
+
+# Env / secrets
+.env
+*.local
+
+# OS
+Thumbs.db
+.DS_Store
