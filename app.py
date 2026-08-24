@@ -119,7 +119,7 @@ def current_user():
 # ---------------------------------------------------------------------------
 @app.context_processor
 def inject_user():
-    return dict(current_user=current_user(), gincana_name="Gincana Escolar")
+    return dict(current_user=current_user(), gincana_name="Gincana UP 2026")
 
 # ---------------------------------------------------------------------------
 # Public routes

@@ -1,12 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Entrar – Gincana Escolar{% endblock %}
+{% block title %}Entrar – Gincana UP{% endblock %}
 {% block content %}
-<div class="container" style="padding-top:40px;">
-    <div class="card" style="text-align:center;">
-        <div style="font-size:48px; margin-bottom:8px;">🏆</div>
-        <h2 style="text-align:center;">Gincana Escolar</h2>
-        <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">
-            Entre para avaliar as equipes
+<div class="container" style="padding-top:32px;">
+    <div class="login-brand">
+        <img src="{{ url_for('static', filename='brand/logo-up.png') }}" alt="UP Centro Educacional">
+    </div>
+
+    <div class="login-title">
+        <div class="school">UP CENTRO EDUCACIONAL</div>
+        <h2>🏆 Gincana 2026</h2>
+    </div>
+
+    <div class="card">
+        <p style="color:var(--muted); font-size:13px; text-align:center; margin-bottom:16px;">
+            Acesse para avaliar as equipes
         </p>
 
         <form method="POST" action="{{ url_for('login') }}">
@@ -21,11 +28,13 @@
             </button>
         </form>
 
-        <p style="margin-top:16px;">
-            <a href="{{ url_for('ranking') }}" style="color:var(--primary); font-size:13px; text-decoration:none;">
+        <p style="margin-top:16px; text-align:center;">
+            <a href="{{ url_for('ranking') }}" style="color:var(--up-red); font-size:13px; font-weight:600; text-decoration:none;">
                 🏆 Ver ranking público
             </a>
         </p>
     </div>
+
+    <img class="brand-hero" src="{{ url_for('static', filename='brand/unidade.jpg') }}" alt="Unidade UP">
 </div>
 {% endblock %}

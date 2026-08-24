@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#4F46E5">
-    <title>{% block title %}Gincana Escolar{% endblock %}</title>
+    <meta name="theme-color" content="#c8102e">
+    <title>{% block title %}Gincana UP{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <!-- Top Bar -->
     <div class="topbar">
-        <h1>🏆 Gincana Escolar</h1>
+        <div class="brand-mark">
+            <img src="{{ url_for('static', filename='brand/logo-up.png') }}" alt="UP Centro Educacional">
+            <h1>Gincana 2026</h1>
+        </div>
         <div class="user-info">
             {% if current_user %}
                 <span class="badge {{ 'badge-admin' if current_user.role == 'admin' else 'badge-prof' }}">
@@ -35,6 +38,12 @@
 
     <!-- Content -->
     {% block content %}{% endblock %}
+
+    <!-- Footer brand -->
+    <div class="brand-footer">
+        <img src="{{ url_for('static', filename='brand/logo-up.png') }}" alt="UP">
+        <div>UP Centro Educacional · Educando para sempre</div>
+    </div>
 
     <!-- Bottom Nav -->
     {% if current_user %}

@@ -18,3 +18,12 @@ pcookies.txt
 # OS
 Thumbs.db
 .DS_Store
+
+# Build/test artifacts
+__pycache__/
+*.pyc
+_testdata/
+_brand/
+_admin*.html
+_jar.txt
+/tmp/
